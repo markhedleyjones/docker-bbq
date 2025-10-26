@@ -1,10 +1,10 @@
 <h1>docker-bbq<br><img alt="docker-bbq" src="https://raw.githubusercontent.com/MarkHedleyJones/docker-bbq/master/media/logo.webp"></h1>
 
-A tool for rapidly cooking up new [Docker](https://www.docker.com/) projects while simplifying containerised software development. Free yourself from writing and optimising dockerfiles and focus on development.
+A tool for rapidly cooking up new [Docker](https://www.docker.com/) or [Podman](https://podman.io/) projects while simplifying containerised software development. Free yourself from writing and optimising dockerfiles and focus on development.
 
 This tool might be useful if you:
-1. become frustrated from manually running `docker run -it -v ...`, or
-1. work across many Docker-based repositories and want more consistency, or
+1. become frustrated from manually running `docker run -it -v ...` or `podman run -it -v ...`, or
+1. work across many container-based repositories and want more consistency, or
 1. are rebuilding your images after modifying source-code.
 
 ## Demonstration
@@ -22,6 +22,21 @@ This tool might be useful if you:
   - Python-pip packages  - `build/pip-requirements.txt` (specify pip version e.g. `pip3-requirements.txt`)
   - Downloadable resources - `build/urilist`
 * When it's time to deploy, running `make production` builds the final stand-alone, distributable image.
+
+## Podman Support
+
+docker-bbq is fully compatible with [Podman](https://podman.io/), a container engine that is compatible with the Docker API. The tools automatically detect whether Docker or Podman is available on your system and use whichever is installed.
+
+### Using Podman on Fedora
+
+On Fedora, you can install Podman with:
+```bash
+sudo dnf install podman
+```
+
+Once installed, you can use docker-bbq with Podman exactly as you would with Docker - no changes needed to your scripts or commands. The detection is automatic:
+- If both Docker and Podman are installed, Podman is preferred
+- The `run` command, `bbq-create`, and all test scripts work seamlessly with Podman
 
 ## Overview
 There are two components to docker-bbq.

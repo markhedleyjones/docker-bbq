@@ -2,6 +2,20 @@
 
 TESTING="${TESTING:=False}"
 
+# Detect container runtime (Docker or Podman)
+detect_container_runtime() {
+	if command -v podman &> /dev/null; then
+		echo "podman"
+	elif command -v docker &> /dev/null; then
+		echo "docker"
+	else
+		echo "Error: Neither Docker nor Podman found. Please install one of them." >&2
+		exit 1
+	fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
 container_name=NULL
 path_mount_input=NULL
 path_mount_output=NULL
@@ -62,7 +76,7 @@ find_repo_name() {
 }
 
 get_docker_images() {
-	docker_images_full=($(docker image list --format "{{.Repository}}:{{.Tag}}" --filter=dangling=false | grep -v "<none>$"))
+	docker_images_full=($(${CONTAINER_RUNTIME} image list --format "{{.Repository}}:{{.Tag}}" --filter=dangling=false | grep -v "<none>$"))
 }
 
 list_docker_images() {
@@ -272,7 +286,7 @@ if [[ ! -f "${bash_history_path}" ]]; then
 fi
 
 # Detect which shell is installed in the image
-shell=$(docker run --entrypoint "" --rm ${image_name}:${image_tag} sh -c 'command -v bash || command -v sh')
+shell=$(${CONTAINER_RUNTIME} run --entrypoint "" --rm ${image_name}:${image_tag} sh -c 'command -v bash || command -v sh')
 
 if [[ ${#user_command_args[@]} -gt 0 ]]; then
 	# Join all user command arguments into a single properly quoted string for bash -c
@@ -289,7 +303,7 @@ else
 	docker_command_args=("${shell}")
 fi
 
-if [[ ! $(docker ps --quiet --filter name="${container_name}") ]]; then
+if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]]; then
 	info "Running in new container (${image_name}:${image_tag})"
 
 	if [[ ${local_workspace} != "" ]]; then
@@ -305,7 +319,7 @@ if [[ ! $(docker ps --quiet --filter name="${container_name}") ]]; then
 	fi
 
 	docker_run_args=(
-		"docker" "run"
+		"${CONTAINER_RUNTIME}" "run"
 		"--name" "${container_name}"
 		"--rm"
 		"--net" "host"
@@ -390,7 +404,7 @@ if [[ ! $(docker ps --quiet --filter name="${container_name}") ]]; then
 	fi
 else
 	info "Running in existing container (${image_name}:${image_tag})"
-	docker_exec_args=("docker" "exec")
+	docker_exec_args=("${CONTAINER_RUNTIME}" "exec")
 
 	if [[ "${interactive}" -eq 1 ]]; then
 		docker_exec_args+=("--interactive" "--tty")

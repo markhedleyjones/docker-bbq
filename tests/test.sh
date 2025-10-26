@@ -2,6 +2,20 @@
 
 set -u
 
+# Detect container runtime (Docker or Podman)
+detect_container_runtime() {
+	if command -v podman &> /dev/null; then
+		echo "podman"
+	elif command -v docker &> /dev/null; then
+		echo "docker"
+	else
+		echo "Error: Neither Docker nor Podman found. Please install one of them." >&2
+		exit 1
+	fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
 width_of_test_titles=40
 
 test_basedir="/tmp/docker-bbq"
@@ -160,9 +174,9 @@ clean() {
   cd ${TESTDIR}
 
   # Kill any already running containers with the TESTREPO's name
-  running="$(docker ps --quiet --filter name="${TESTREPO}")"
+  running="$(${CONTAINER_RUNTIME} ps --quiet --filter name="${TESTREPO}")"
   if [ ! -z "${running}" ]; then
-    docker kill "${running}"
+    ${CONTAINER_RUNTIME} kill "${running}"
   fi
 }
 
