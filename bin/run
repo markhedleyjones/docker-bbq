@@ -343,7 +343,16 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 			docker_run_args+=("--device" "/dev/dri:/dev/dri")
 		fi
 		if command -v nvidia-smi >/dev/null; then
-			docker_run_args+=("--gpus=all" "-e" "NVIDIA_DRIVER_CAPABILITIES=all")
+			docker_run_args+=("-e" "NVIDIA_DRIVER_CAPABILITIES=all")
+			# Use different GPU access method for Docker vs Podman
+			if [[ "${CONTAINER_RUNTIME}" == "docker" ]]; then
+				docker_run_args+=("--gpus=all")
+			else
+				# For Podman, pass through NVIDIA device files
+				docker_run_args+=("--device" "/dev/nvidia0:/dev/nvidia0")
+				docker_run_args+=("--device" "/dev/nvidiactl:/dev/nvidiactl")
+				docker_run_args+=("--device" "/dev/nvidia-uvm:/dev/nvidia-uvm")
+			fi
 		fi
 	fi
 
