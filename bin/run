@@ -4,9 +4,9 @@ TESTING="${TESTING:=False}"
 
 # Detect container runtime (Docker or Podman)
 detect_container_runtime() {
-	if command -v podman &> /dev/null; then
+	if command -v podman &>/dev/null; then
 		echo "podman"
-	elif command -v docker &> /dev/null; then
+	elif command -v docker &>/dev/null; then
 		echo "docker"
 	else
 		echo "Error: Neither Docker nor Podman found. Please install one of them." >&2
@@ -310,14 +310,6 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		info "Linking ${local_workspace} into ${image_name}:${image_workspace}"
 	fi
 
-	# Setup X11 display if available
-	if [[ ${DISPLAY} ]]; then
-		xsock=/tmp/.X11-unix
-		xauth=/tmp/.docker.xauth
-		touch $xauth
-		xauth nlist "${DISPLAY}" | sed -e 's/^..../ffff/' | xauth -f "${xauth}" nmerge -
-	fi
-
 	docker_run_args=(
 		"${CONTAINER_RUNTIME}" "run"
 		"--name" "${container_name}"
@@ -336,9 +328,22 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 	# Add volume mounts and other args
 	docker_run_args+=("-v" "${bash_history_path}:/root/.bash_history")
 
-	# Display args
-	if [[ ${DISPLAY} ]]; then
+	# Display setup (Wayland preferred over X11)
+	if [[ ${WAYLAND_DISPLAY} ]]; then
+		wayland_socket="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}"
+		docker_run_args+=("-e" "WAYLAND_DISPLAY" "-e" "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}" "-v" "${wayland_socket}:${wayland_socket}:rw")
+	elif [[ ${DISPLAY} ]]; then
+		xsock=/tmp/.X11-unix
+		xauth=/tmp/.docker.xauth
+		touch $xauth
+		if [[ -f "$HOME/.Xauthority" ]]; then
+			xauth nlist "${DISPLAY}" | sed -e 's/^..../ffff/' | xauth -f "${xauth}" nmerge -
+		fi
 		docker_run_args+=("-e" "DISPLAY" "-e" "XAUTHORITY=${xauth}" "-v" "${xauth}:${xauth}:rw" "-v" "${xsock}:${xsock}:rw" "--env" "QT_X11_NO_MITSHM=1")
+	fi
+
+	# GPU access for display
+	if [[ ${WAYLAND_DISPLAY} ]] || [[ ${DISPLAY} ]]; then
 		if [[ -d /dev/dri ]]; then
 			docker_run_args+=("--device" "/dev/dri:/dev/dri")
 		fi
