@@ -11,7 +11,7 @@ pass "${BASEDIR}/tests/generate-test-dockerfiles.sh ${generated_repos_dir}"
 # Check if hadolint is installed
 if ! command -v hadolint &>/dev/null; then
 	echo ""
-	echo "   WARNING: hadolint not installed - skipping linting step"
+	echo -e "   \e[33mWARNING:\e[0m hadolint not installed - skipping linting step"
 	echo "   Install hadolint to run these tests locally: https://github.com/hadolint/hadolint"
 	echo ""
 	return 0
