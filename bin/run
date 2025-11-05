@@ -367,9 +367,9 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		docker_run_args+=("-e" "PULSE_SERVER=unix:/run/user/$(id -u)/pulse/native")
 	fi
 
-	# Workspace mount
+	# Workspace mount (with :z for SELinux - harmless on non-SELinux systems)
 	if [[ "${local_workspace}" != "" ]] && [[ "${image_workspace}" != "" ]]; then
-		docker_run_args+=("-v" "${local_workspace}:${image_workspace}")
+		docker_run_args+=("-v" "${local_workspace}:${image_workspace}:z")
 	fi
 
 	# AWS credentials
@@ -378,12 +378,12 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		docker_run_args+=("-v" "${HOME}/.aws:${container_workdir}/.aws")
 	fi
 
-	# IO mounts
+	# IO mounts (with z for SELinux - harmless on non-SELinux systems)
 	if [[ "${path_mount_input}" != "NULL" ]]; then
-		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_input}"),target=/mnt/input,readonly" "--env" "INPUT_MOUNTPOINT=/mnt/input")
+		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_input}"),target=/mnt/input,readonly,z" "--env" "INPUT_MOUNTPOINT=/mnt/input")
 	fi
 	if [[ "${path_mount_output}" != "NULL" ]]; then
-		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_output}"),target=/mnt/output" "--env" "OUTPUT_MOUNTPOINT=/mnt/output")
+		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_output}"),target=/mnt/output,z" "--env" "OUTPUT_MOUNTPOINT=/mnt/output")
 	fi
 
 	# User args
