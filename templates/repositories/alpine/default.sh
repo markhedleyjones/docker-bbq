@@ -9,7 +9,7 @@ dockerfile_args=(
 )
 
 dockerfile_components=(
-  base-header
+  base-header-alpine
   base-install-apk-packages
   base-copy-local-resources
   base-create-user-alpine

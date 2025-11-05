@@ -12,7 +12,7 @@ dockerfile_args=(
 )
 
 dockerfile_components=(
-  base-header
+  base-header-debian
   base-install-apt-packages
   ubuntu/base-install-pip-packages-ubuntu
   base-copy-local-resources
