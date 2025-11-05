@@ -32,7 +32,8 @@ jobs:
       - name: Generate Dockerfiles from templates
         run: |
           mkdir -p /tmp/test-repos
-          for template in alpine debian python ubuntu ros ros2; do
+          for template_dir in templates/repositories/*/; do
+            template=$(basename "$template_dir")
             echo "Generating $template template..."
             bin/bbq-create --no-git "$template" "/tmp/test-repos/test-$template"
           done
