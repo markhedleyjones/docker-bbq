@@ -90,11 +90,11 @@ export test_template
 # Override locations to remove need for installation before test
 bbq-create() {
 	echo "${BASEDIR}/bin/bbq-create $*"
-	"${BASEDIR}/bin/bbq-create" $*
+	"${BASEDIR}/bin/bbq-create" "$@"
 }
 
 run() {
-	"${BASEDIR}/bin/run" $*
+	"${BASEDIR}/bin/run" "$@"
 }
 
 expected_return_code=NULL
@@ -159,13 +159,13 @@ run_test() {
 
 pass() {
 	expected_return_code=0
-	run_test $*
+	run_test "$@"
 	return $?
 }
 
 fail() {
 	expected_return_code=1
-	run_test $*
+	run_test "$@"
 	return $?
 }
 
