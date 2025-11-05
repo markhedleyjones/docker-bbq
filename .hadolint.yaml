@@ -1,0 +1,16 @@
+# Hadolint configuration for Dockerfile linting
+# See: https://github.com/hadolint/hadolint
+
+# Ignore specific rules
+ignored:
+  - DL3006  # Always tag the version of an image explicitly
+  - DL3008  # Pin versions in apt-get install
+  - DL3013  # Pin versions in pip install
+  - DL3016  # Pin versions in npm install
+  - DL3018  # Pin versions in apk add
+  - DL3028  # Pin versions in gem install
+  - DL3033  # Specify version with yum install
+  - DL3034  # Specify version with zypper install
+
+# Failure threshold - only fail on errors and warnings (default is 'info')
+failure-threshold: warning

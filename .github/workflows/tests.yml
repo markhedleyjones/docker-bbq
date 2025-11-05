@@ -30,20 +30,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate Dockerfiles from templates
-        run: |
-          mkdir -p generated-test-repos
-          for template_dir in templates/repositories/*/; do
-            template=$(basename "$template_dir")
-            echo "Generating $template template..."
-            bin/bbq-create --no-git "$template" "generated-test-repos/test-$template"
-          done
+        run: tests/generate-test-dockerfiles.sh generated-test-repos
 
       - name: Run Hadolint on generated Dockerfiles
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: generated-test-repos/*/Dockerfile
           recursive: true
-          failure-threshold: warning
+          config: .hadolint.yaml
 
   test:
     name: Integration Tests
