@@ -13,4 +13,4 @@ ignored:
   - DL3034  # Specify version with zypper install
 
 # Failure threshold - only fail on errors and warnings (default is 'info')
-failure-threshold: warning
+failure-threshold: info
