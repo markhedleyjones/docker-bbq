@@ -1,4 +1,0 @@
-ARG BASE_IMAGE=scratch
-FROM $BASE_IMAGE AS base
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-COPY build/tmp/ /build/

@@ -12,7 +12,7 @@ dockerfile_args=(
 )
 
 dockerfile_components=(
-  base-header-debian
+  base-header
   base-install-apt-packages
   ros2/base-install-pip-packages-ros2
   base-copy-local-resources
