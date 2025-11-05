@@ -29,10 +29,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Hadolint on template Dockerfiles
+      - name: Generate Dockerfiles from templates
+        run: |
+          mkdir -p /tmp/test-repos
+          for template in alpine debian python ubuntu ros ros2; do
+            echo "Generating $template template..."
+            bin/bbq-create --no-git "$template" "/tmp/test-repos/test-$template"
+          done
+
+      - name: Run Hadolint on generated Dockerfiles
         uses: hadolint/hadolint-action@v3.1.0
         with:
-          dockerfile: templates/components/dockerfile/*
+          dockerfile: /tmp/test-repos/*/Dockerfile
           recursive: true
           failure-threshold: warning
 
