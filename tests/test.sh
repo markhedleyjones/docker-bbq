@@ -72,7 +72,7 @@ while :; do
 	-v | --verbose) verbosity=1 ;;
 	-l | --lint) test_sequence=("${lint_sequence[@]}") ;;
 	-t | --templates) test_sequence=(templates.sh) ;;
-	-t | --template) test_sequence=(templates.sh) && test_template=$2 && shift ;;
+	--template) test_sequence=(templates.sh) && test_template=$2 && shift ;;
 	-d | --debug) abort_on_failure=1 ;;
 	-a | --all) test_sequence+=(templates.sh "${lint_sequence[@]}") ;;
 	-?*) error "Unknown option: $1" ;;
@@ -85,6 +85,7 @@ done
 export TESTDIR
 export TESTREPO
 export DOCKER_BBQ_NON_INTERACTIVE=1
+export test_template
 
 # Override locations to remove need for installation before test
 bbq-create() {
