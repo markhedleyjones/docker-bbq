@@ -1,0 +1,7 @@
+
+################################################################################
+# PRODUCTION TARGET - generate final self-contained image
+################################################################################
+FROM base AS production-image
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+ARG USER_NAME

@@ -14,11 +14,11 @@ dockerfile_components=(
   base-copy-local-resources
   base-create-user-alpine
   base-setup-workspace-vars
-  target-development
+  target-development-alpine
   target-development-body
-  target-preproduction
+  target-preproduction-alpine
   target-preproduction-body
-  target-production
+  target-production-alpine
   target-production-body
   target-production-footer
 )

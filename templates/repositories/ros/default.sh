@@ -19,11 +19,11 @@ dockerfile_components=(
   base-create-user
   base-setup-workspace-vars
   ros/target-base-footer
-  target-development
+  target-development-debian
   ros/target-development-body
-  target-preproduction
+  target-preproduction-debian
   ros/target-preproduction-body
-  target-production
+  target-production-debian
   target-production-body
   ros/target-production-footer
 )
