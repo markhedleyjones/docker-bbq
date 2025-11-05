@@ -317,6 +317,11 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		"--net" "host"
 	)
 
+	# For Podman rootless, preserve UID mapping for volume mounts
+	if [[ "${CONTAINER_RUNTIME}" == "podman" ]]; then
+		docker_run_args+=("--userns=keep-id")
+	fi
+
 	# Add optional args
 	if [[ ${run_with_privileges} -eq 1 ]]; then
 		docker_run_args+=("--privileged")
