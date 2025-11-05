@@ -15,25 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run shellcheck
+      - name: Run shellcheck on all bash scripts
         uses: ludeeus/action-shellcheck@master
         with:
-          scandir: './bin'
+          scandir: '.'
           severity: warning
-
-      - name: Run shellcheck on install script
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: './'
-          format: gcc
-          severity: warning
-          additional_files: 'install.sh'
-
-      - name: Run shellcheck on test scripts
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: './tests'
-          severity: warning
+          ignore_paths: '.git media'
 
   hadolint:
     name: Dockerfile Linting
