@@ -37,6 +37,7 @@ test_sequence=(
 )
 
 lint_sequence=(
+	shellcheck-linting.sh
 	dockerfile-linting.sh
 )
 
