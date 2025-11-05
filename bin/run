@@ -352,11 +352,11 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 			# Use different GPU access method for Docker vs Podman
 			if [[ "${CONTAINER_RUNTIME}" == "docker" ]]; then
 				docker_run_args+=("--gpus=all")
-			else
-				# For Podman, pass through NVIDIA device files
-				docker_run_args+=("--device" "/dev/nvidia0:/dev/nvidia0")
-				docker_run_args+=("--device" "/dev/nvidiactl:/dev/nvidiactl")
-				docker_run_args+=("--device" "/dev/nvidia-uvm:/dev/nvidia-uvm")
+			elif [[ "${CONTAINER_RUNTIME}" == "podman" ]]; then
+				# For Podman with NVIDIA CDI support
+				docker_run_args+=("--device" "nvidia.com/gpu=all")
+				docker_run_args+=("--annotation=run.oci.keep_original_groups=1")
+				docker_run_args+=("--security-opt=label=disable")
 			fi
 		fi
 	fi
