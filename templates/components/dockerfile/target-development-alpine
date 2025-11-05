@@ -1,7 +1,0 @@
-
-################################################################################
-# DEVELOPMENT TARGET - generate development-friendly image
-################################################################################
-FROM base AS development-image
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-ARG USER_NAME

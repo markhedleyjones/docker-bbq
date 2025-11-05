@@ -16,11 +16,11 @@ dockerfile_components=(
   base-copy-local-resources
   base-create-user
   base-setup-workspace-vars
-  target-development-debian
+  target-development
   target-development-body
-  target-preproduction-debian
+  target-preproduction
   target-preproduction-body
-  target-production-debian
+  target-production
   target-production-body
   target-production-footer
 )

@@ -1,9 +1,0 @@
-
-################################################################################
-# PRE-PRODUCTION STAGE - transform workspace into production-ready state
-################################################################################
-FROM base AS pre-production
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
-ARG USER_NAME
-ARG WORKSPACE_NAME
-COPY --chown=${USER_NAME} $WORKSPACE_NAME $WORKSPACE
