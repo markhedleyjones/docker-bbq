@@ -361,6 +361,12 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		fi
 	fi
 
+	# Audio support (PulseAudio/PipeWire)
+	if [[ -S "/run/user/$(id -u)/pulse/native" ]]; then
+		docker_run_args+=("-v" "/run/user/$(id -u)/pulse/native:/run/user/$(id -u)/pulse/native")
+		docker_run_args+=("-e" "PULSE_SERVER=unix:/run/user/$(id -u)/pulse/native")
+	fi
+
 	# Workspace mount
 	if [[ "${local_workspace}" != "" ]] && [[ "${image_workspace}" != "" ]]; then
 		docker_run_args+=("-v" "${local_workspace}:${image_workspace}")
