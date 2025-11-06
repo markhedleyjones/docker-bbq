@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # Variables used by bbq-create via eval
+
 tag=${tag:-latest}
 
 dockerfile_args=(

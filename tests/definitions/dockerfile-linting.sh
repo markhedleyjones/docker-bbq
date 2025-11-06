@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # name is read by run_test() in test.sh
+
 subheading "Dockerfile linting"
 
 generated_repos_dir="${TESTDIR}/generated-lint-repos"
@@ -19,9 +21,10 @@ fi
 
 # Lint all generated Dockerfiles
 repositories_dir="${BASEDIR}/templates/repositories"
+# shellcheck disable=SC2207
 repositories=($(ls ${repositories_dir}))
 
-for repository in ${repositories[*]}; do
+for repository in "${repositories[@]}"; do
 	name="Lint ${repository} Dockerfile"
 	pass "hadolint --config ${BASEDIR}/.hadolint.yaml ${generated_repos_dir}/test-${repository}/Dockerfile"
 done

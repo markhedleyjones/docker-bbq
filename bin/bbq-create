@@ -3,6 +3,7 @@
 path_base="$(cd "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")" &>/dev/null && pwd -P)"
 path_templates="${path_base}/templates"
 path_repositories="${path_templates}/repositories"
+# shellcheck disable=SC2207
 repositories=($(ls "${path_repositories}"))
 default_workspace_name="workspace"
 enable_git=1
@@ -38,13 +39,13 @@ EOF
 
 show_supported() {
   echo "How about starting with one of these templates:"
-  for available_repo in ${repositories[*]}; do
+  for available_repo in "${repositories[@]}"; do
     echo " ${available_repo}"
   done
 }
 
 check_supported() {
-  if [[ ! " ${repositories[*]} " =~ " $1 " ]]; then
+  if [[ ! " ${repositories[*]} " =~ $1 ]]; then
     echo "Sorry, there is no template for $1"
     show_supported
     exit 1
@@ -73,7 +74,7 @@ for i in "$@"; do
     regenerate_repository=1
     ;;
   *)
-    args+=($1)
+    args+=("$1")
     ;;
   esac
   shift
@@ -102,7 +103,7 @@ if [[ ${regenerate_repository} == 0 ]]; then
   fi
 else
 
-  repo_name="$(basename $(pwd))"
+  repo_name="$(basename "$(pwd)")"
 
   # Are we going to be commiting our changes?
   if [ -d .git ] && [ "${enable_git}" = "1" ]; then
@@ -126,10 +127,11 @@ fi
 compile_build_args() {
   local tag="${1}"
   shift
-  vars=(${dockerfile_args[@]})
+  vars=("${dockerfile_args[@]}")
   vars+=("WORKDIR,_")
-  sorted=($(printf '%s\n' "${vars[@]}" | IFS="\n" sort))
-  for i in ${sorted[*]}; do
+  # shellcheck disable=SC2207
+  sorted=($(printf '%s\n' "${vars[@]}" | IFS=$'\n' sort))
+  for i in "${sorted[@]}"; do
     if [ "${tag}" = "development" ] && [ "${i:0:7}" = "WORKDIR" ]; then
       file+='''\t\t--build-arg WORKDIR=$(HOME) \x5C\n'''
     elif [ "${tag}" = "development" ] && [ "${i:0:5}" = "USER_" ]; then
@@ -159,6 +161,7 @@ compile_file() {
     file+=$'\n'
   fi
   eval "components=\"\${${filetype}_components[*]}\""
+  # shellcheck disable=SC2154
   for component in ${components}; do
     if [[ "${component}" =~ "/" ]]; then
       component_path="${path_repositories}/${component}"
@@ -178,6 +181,7 @@ compile_file() {
 }
 
 compile_header() {
+  # shellcheck disable=SC2207
   sorted=($(printf '%s\n' "$@" | sort))
   file=""
   reserved_params=(
@@ -186,20 +190,20 @@ compile_header() {
     "USER_NAME"
     "USER_UID"
   )
-  for i in ${sorted[*]}; do
+  for i in "${sorted[@]}"; do
     IFS=","
     set -- $i
-    if [[ ! " ${reserved_params[@]} " =~ " $1 " ]]; then
+    if [[ ! " ${reserved_params[*]} " =~ $1 ]]; then
       file+=$(printf '%-15s := %s\\n' "$1" "$2")
     fi
     unset IFS
   done
   file+=$'\n'
   file+='# These settings only apply to the production image\n'
-  for i in ${sorted[*]}; do
+  for i in "${sorted[@]}"; do
     IFS=","
     set -- $i
-    if [[ " ${reserved_params[@]} " =~ " $1 " ]]; then
+    if [[ " ${reserved_params[*]} " =~ $1 ]]; then
       file+=$(printf '%-15s := %s\\n' "$1" "$2")
     fi
     unset IFS
@@ -212,7 +216,7 @@ if [[ ${regenerate_repository} == 0 ]]; then
   if [ "${enable_git}" == '1' ]; then
     printf "$(cd "${repo_name}" && git init --initial-branch=main >/dev/null)"
   fi
-  cd ${repo_name}
+  cd "${repo_name}" || exit
 fi
 
 if [ -z ${workspace_name+x} ]; then
@@ -220,7 +224,7 @@ if [ -z ${workspace_name+x} ]; then
 fi
 
 required_directories=(
-  ${workspace_name}
+  "${workspace_name}"
   build
   build/resources
 )
@@ -229,13 +233,13 @@ required_files=(
   build/packagelist
 )
 
-for required_directory in ${required_directories[*]}; do
+for required_directory in "${required_directories[@]}"; do
   if [ ! -d ${required_directory} ]; then
     mkdir ${required_directory}
   fi
 done
 
-for required_file in ${required_files[*]}; do
+for required_file in "${required_files[@]}"; do
   if [ ! -f ${required_file} ]; then
     touch ${required_file}
   fi
@@ -248,7 +252,7 @@ echo "${file}" | head -c -1 >Dockerfile
 dockerfile_args+=(
   "TAG,latest"
 )
-compile_header ${dockerfile_args[*]}
+compile_header "${dockerfile_args[@]}"
 compile_file "makefile"
 printf "${file}" | head -c -1 >Makefile
 
@@ -259,12 +263,14 @@ echo "${file}" | head -c -1 >README.md
 
 # Generate .dockerignore
 cat ${path_templates}/components/dockerignore >.dockerignore
-for component in ${dockerignore_entries[*]}; do
+# shellcheck disable=SC2154
+for component in "${dockerignore_entries[@]}"; do
   echo "${component}" >>.dockerignore
 done
 
 # Create any directories and files as listed in the template
-for directory in ${create_directories[*]}; do
+# shellcheck disable=SC2154
+for directory in "${create_directories[@]}"; do
   mkdir -p "${directory}"
 done
 
@@ -277,7 +283,8 @@ fi
 if [ "${enable_git}" == '1' ]; then
   # Generate .gitignore
   cat ${path_templates}/components/gitignore >.gitignore
-  for component in ${gitignore_entries[*]}; do
+  # shellcheck disable=SC2154
+  for component in "${gitignore_entries[@]}"; do
     echo "${component}" >>.gitignore
   done
 

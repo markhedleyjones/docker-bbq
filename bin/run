@@ -76,11 +76,13 @@ find_repo_name() {
 }
 
 get_docker_images() {
+	# shellcheck disable=SC2207
 	docker_images_full=($(${CONTAINER_RUNTIME} image list --format "{{.Repository}}:{{.Tag}}" --filter=dangling=false | grep -v "<none>$"))
 }
 
 list_docker_images() {
 	get_docker_images
+	# shellcheck disable=SC2034
 	for image in "${docker_images_full[@]}"; do
 		echo "$(basename ${image_name})"
 	done
@@ -130,45 +132,45 @@ usage() {
 	cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [--repo <path_to_repo>] [command]
 
-  Enter a docker container and optionally execute a command. If no command is
-  given, drop into an interactive shell.
+	Enter a docker container and optionally execute a command. If no command is
+	given, drop into an interactive shell.
 
-  The image-source will be determined the following checks:
-  1. If <path_to_repo> is provided, search that path for docker-bbq repository.
-  2. Check to see if the user is currently in a docker-bbq repository.
+	The image-source will be determined the following checks:
+	1. If <path_to_repo> is provided, search that path for docker-bbq repository.
+	2. Check to see if the user is currently in a docker-bbq repository.
 
-  Once the image-source is decided, check if a container is already running.
-  - If so, execute the command (or drop into a shell) inside that image.
-  - If not, start a new image using docker run.
+	Once the image-source is decided, check if a container is already running.
+	- If so, execute the command (or drop into a shell) inside that image.
+	- If not, start a new image using docker run.
 
 OPTIONS:
 
-  --mount       <path>
-                  An alias for --mount-input
-  --mount-input <path>
-                  Provide a path to a folder to mount into the container
-                  will appear at /mnt/input with read-only permissions
+	--mount       <path>
+									An alias for --mount-input
+	--mount-input <path>
+									Provide a path to a folder to mount into the container
+									will appear at /mnt/input with read-only permissions
 
-  --mount-output <path>
-                  Provide a path to a folder to mount out of the container
-                  will appear at /mnt/output with read and write permissions
+	--mount-output <path>
+									Provide a path to a folder to mount out of the container
+									will appear at /mnt/output with read and write permissions
 
-  --aws           Link AWS credentials into the container
-  -h, --help      Print this help and exit
-  -i, --image     Provide a docker image name
-  -l, --list      Print the list of docker images and exit
-  -n, --non-interactive
-                  Run in non-interactive mode (no tty)
-  -r, --repo      Provide a path to a docker-bbq repository
-  -t, --tag       Provide a docker image tag
-  -v, --verbose   Print verbose output
+	--aws           Link AWS credentials into the container
+	-h, --help      Print this help and exit
+	-i, --image     Provide a docker image name
+	-l, --list      Print the list of docker images and exit
+	-n, --non-interactive
+									Run in non-interactive mode (no tty)
+	-r, --repo      Provide a path to a docker-bbq repository
+	-t, --tag       Provide a docker image tag
+	-v, --verbose   Print verbose output
 
 
 EXAMPLES:
 
-  $(basename "${BASH_SOURCE[0]}") ~/repos/debian-buster-slim
+	$(basename "${BASH_SOURCE[0]}") ~/repos/debian-buster-slim
 
-  Drop into the shell of a docker-bbq repository at specified path.
+	Drop into the shell of a docker-bbq repository at specified path.
 EOF
 	exit
 }
@@ -222,6 +224,7 @@ fi
 testing "image-from-working-dir" "${image_name}"
 
 container_workdir=""
+# shellcheck disable=SC2034
 user_command=""
 
 # Dont mount input/output if we are not in a repository using development image

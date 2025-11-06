@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # name is read by run_test() in test.sh
+
 # Check if shellcheck is installed
 if ! command -v shellcheck &>/dev/null; then
 	echo ""

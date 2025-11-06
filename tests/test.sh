@@ -45,19 +45,19 @@ usage() {
 	cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [options]
 
-  Run the standard test-suit on docker-bbq
+	Run the standard test-suit on docker-bbq
 
 OPTIONS:
 
-  -h, --help       Print this help and exit
-  -v, --verbose    Print debug information on test failure
-  -a, --all        Run standard, template, and linting tests
-  -l, --lint       Run only Dockerfile linting tests
-  -t, --templates  Run only the template repository tests
-  -d, --debug      Abort on first failure and don't clean-up
+	-h, --help       Print this help and exit
+	-v, --verbose    Print debug information on test failure
+	-a, --all        Run standard, template, and linting tests
+	-l, --lint       Run only Dockerfile linting tests
+	-t, --templates  Run only the template repository tests
+	-d, --debug      Abort on first failure and don't clean-up
 
-  --template <template-name>
-                   Run only the tests against the specified template name
+	--template <template-name>
+									 Run only the tests against the specified template name
 EOF
 	exit
 }
@@ -119,7 +119,7 @@ subheading() {
 
 run_test() {
 	if [ "${name}" == NULL ]; then
-		exit "Test does not have a name!"
+		echo "Test does not have a name!" >&2
 		exit 1
 	fi
 	printf " - "
@@ -137,7 +137,6 @@ run_test() {
 	fi
 	((num_tests_subtotal = num_tests_subtotal + 1))
 	name=NULL
-	output=$(cat "${TESTDIR}/output")
 	if [ ${success} -eq 0 ] && [ ${verbosity} -eq 1 ]; then
 		if [ -s "${TESTDIR}/output" ]; then
 
@@ -178,7 +177,7 @@ clean() {
 	# Regenerate clean test directories
 	rm -rf ${TESTDIR}
 	mkdir -p ${TESTDIR}
-	cd ${TESTDIR}
+	cd "${TESTDIR}" || exit
 
 	# Kill any already running containers with the TESTREPO's name
 	running="$(${CONTAINER_RUNTIME} ps --quiet --filter name="${TESTREPO}")"
@@ -187,7 +186,7 @@ clean() {
 	fi
 }
 
-for filename in ${test_sequence[*]}; do
+for filename in "${test_sequence[@]}"; do
 	clean
 	heading "Running ${filename%.sh} tests ... "
 	source "${BASEDIR}/tests/definitions/${filename}"

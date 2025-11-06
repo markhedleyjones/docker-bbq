@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # name is read by run_test() in test.sh
+
 bbq-create debian ${TESTREPO} >/dev/null 2>&1
-cd ${TESTREPO}
+cd ${TESTREPO} || exit
 
 name="Building development image (debian)"
 pass make

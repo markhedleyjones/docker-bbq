@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # Variables used by bbq-create via eval
+
 workspace_name=catkin_ws
 
 dockerfile_args=(
@@ -8,7 +10,7 @@ dockerfile_args=(
   USER_GID,1000
   USER_UID,1000
   USER_NAME,user
-  WORKSPACE_NAME,${workspace_name}
+  WORKSPACE_NAME,"${workspace_name}"
 )
 
 dockerfile_components=(
@@ -48,19 +50,19 @@ readme_components=(
 )
 
 create_directories=(
-  ${workspace_name}/src
+  "${workspace_name}/src"
 )
 
 dockerignore_entries=(
-  ${workspace_name}/build
-  ${workspace_name}/devel
-  ${workspace_name}/install
+  "${workspace_name}/build"
+  "${workspace_name}/devel"
+  "${workspace_name}/install"
 )
 
 gitignore_entries=(
-  ${workspace_name}/build
-  ${workspace_name}/devel
-  ${workspace_name}/install
-  ${workspace_name}/.catkin_workspace
-  ${workspace_name}/src/CMakeLists.txt
+  "${workspace_name}/build"
+  "${workspace_name}/devel"
+  "${workspace_name}/install"
+  "${workspace_name}/.catkin_workspace"
+  "${workspace_name}/src/CMakeLists.txt"
 )
