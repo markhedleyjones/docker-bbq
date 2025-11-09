@@ -321,6 +321,7 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		"${CONTAINER_RUNTIME}" "run"
 		"--name" "${container_name}"
 		"--rm"
+		"--pull=never"
 		"--net" "host"
 	)
 
