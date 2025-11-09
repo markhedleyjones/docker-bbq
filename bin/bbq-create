@@ -3,13 +3,14 @@
 path_base="$(cd "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")" &>/dev/null && pwd -P)"
 path_templates="${path_base}/templates"
 path_repositories="${path_templates}/repositories"
+# shellcheck disable=SC2207
 repositories=($(ls "${path_repositories}"))
 default_workspace_name="workspace"
 enable_git=1
 regenerate_repository=0
 
 usage() {
-  cat <<EOF
+	cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") <template-name> <project-name>
        $(basename "${BASH_SOURCE[0]}") --in-place <template-name>
 
@@ -33,50 +34,50 @@ EXAMPLES:
   debian image (debian:buster-slim)
 
 EOF
-  exit
+	exit
 }
 
 show_supported() {
-  echo "How about starting with one of these templates:"
-  for available_repo in ${repositories[*]}; do
-    echo " ${available_repo}"
-  done
+	echo "How about starting with one of these templates:"
+	for available_repo in "${repositories[@]}"; do
+		echo " ${available_repo}"
+	done
 }
 
 check_supported() {
-  if [[ ! " ${repositories[*]} " =~ " $1 " ]]; then
-    echo "Sorry, there is no template for $1"
-    show_supported
-    exit 1
-  fi
+	if [[ ! " ${repositories[*]} " =~ $1 ]]; then
+		echo "Sorry, there is no template for $1"
+		show_supported
+		exit 1
+	fi
 }
 
 if [[ $# -eq 0 ]]; then
-  usage
+	usage
 fi
 
 args=()
 
 for i in "$@"; do
-  case $i in
-  --help | -h)
-    usage
-    ;;
-  --list | -l)
-    show_supported
-    exit
-    ;;
-  --no-git)
-    enable_git=0
-    ;;
-  --in-place | -i)
-    regenerate_repository=1
-    ;;
-  *)
-    args+=($1)
-    ;;
-  esac
-  shift
+	case $i in
+	--help | -h)
+		usage
+		;;
+	--list | -l)
+		show_supported
+		exit
+		;;
+	--no-git)
+		enable_git=0
+		;;
+	--in-place | -i)
+		regenerate_repository=1
+		;;
+	*)
+		args+=("$1")
+		;;
+	esac
+	shift
 done
 
 repository="${args[0]}"
@@ -84,161 +85,164 @@ repository="${args[0]}"
 check_supported "${repository}"
 
 if [[ ${regenerate_repository} == 0 ]]; then
-  if [[ $# -eq 1 ]]; then
-    echo "Please specify a name for the repository!"
-    exit 1
-  fi
+	if [[ $# -eq 1 ]]; then
+		echo "Please specify a name for the repository!"
+		exit 1
+	fi
 
-  repo_name="${args[1]}"
+	repo_name="${args[1]}"
 
-  if [[ -d "${repo_name}" ]]; then
-    echo "Target directory '${repo_name}' already exists - aborting"
-    exit 1
-  fi
+	if [[ -d "${repo_name}" ]]; then
+		echo "Target directory '${repo_name}' already exists - aborting"
+		exit 1
+	fi
 
-  if [ "${enable_git}" == '1' ] && [ ! -s ~/.gitconfig ]; then
-    echo ${repo_name}" will not be setup with git as ~/.gitconfig could not be found"
-    enable_git=0
-  fi
+	if [ "${enable_git}" == '1' ] && [ ! -s ~/.gitconfig ]; then
+		echo ${repo_name}" will not be setup with git as ~/.gitconfig could not be found"
+		enable_git=0
+	fi
 else
 
-  repo_name="$(basename $(pwd))"
+	repo_name="$(basename "$(pwd)")"
 
-  # Are we going to be commiting our changes?
-  if [ -d .git ] && [ "${enable_git}" = "1" ]; then
-    # Is the repository clean?
-    if [ "$(git status --short)" != "" ]; then
-      echo "ERROR: Current repository is not clean - aborting!"
-      echo "Please commit or stash your current changes and try again."
-      exit 1
-    fi
-  fi
+	# Are we going to be commiting our changes?
+	if [ -d .git ] && [ "${enable_git}" = "1" ]; then
+		# Is the repository clean?
+		if [ "$(git status --short)" != "" ]; then
+			echo "ERROR: Current repository is not clean - aborting!"
+			echo "Please commit or stash your current changes and try again."
+			exit 1
+		fi
+	fi
 fi
 
 # Load the components (contains arrays to use eval)
 eval "$(cat "${path_repositories}/${repository}/default.sh")"
 
 if [ -z ${dockerfile_args+x} ]; then
-  echo "Error: Template '${repository}' is missing dockerfile_args - aborting"
-  exit 1
+	echo "Error: Template '${repository}' is missing dockerfile_args - aborting"
+	exit 1
 fi
 
 compile_build_args() {
-  local tag="${1}"
-  shift
-  vars=(${dockerfile_args[@]})
-  vars+=("WORKDIR,_")
-  sorted=($(printf '%s\n' "${vars[@]}" | IFS="\n" sort))
-  for i in ${sorted[*]}; do
-    if [ "${tag}" = "development" ] && [ "${i:0:7}" = "WORKDIR" ]; then
-      file+='''\t\t--build-arg WORKDIR=$(HOME) \x5C\n'''
-    elif [ "${tag}" = "development" ] && [ "${i:0:5}" = "USER_" ]; then
-      # Override the development GID, UID and USER with current user values
-      if [ "${i:0:8}" = "USER_GID" ]; then
-        file+='''\t\t--build-arg USER_GID=$(shell id --group) \x5C\n'''
-      elif [ "${i:0:8}" = "USER_UID" ]; then
-        file+='''\t\t--build-arg USER_UID=$(shell id --user) \x5C\n'''
-      elif [ "${i:0:8}" = "USER_NAM" ]; then
-        file+='''\t\t--build-arg USER_NAME=$(shell id --user --name) \x5C\n'''
-      fi
-    elif [ "${i:0:3}" != "TAG" ]; then
-      IFS=","
-      set -- $i
-      file+=$(printf '''\t\t--build-arg %s=$(%s) ''' "$1" "$1")"\x5C\n"
-      unset IFS
-    fi
-  done
-  file+='\t\t--tag $(IMAGE_NAME):'
-  file+="${tag}"
-  file+=' \x5C\n\t\t.\n'
+	local tag="${1}"
+	shift
+	vars=("${dockerfile_args[@]}")
+	vars+=("WORKDIR,_")
+	# shellcheck disable=SC2207
+	sorted=($(printf '%s\n' "${vars[@]}" | IFS=$'\n' sort))
+	for i in "${sorted[@]}"; do
+		if [ "${tag}" = "development" ] && [ "${i:0:7}" = "WORKDIR" ]; then
+			file+='''\t\t--build-arg WORKDIR=$(HOME) \x5C\n'''
+		elif [ "${tag}" = "development" ] && [ "${i:0:5}" = "USER_" ]; then
+			# Override the development GID, UID and USER with current user values
+			if [ "${i:0:8}" = "USER_GID" ]; then
+				file+='''\t\t--build-arg USER_GID=$(shell id --group) \x5C\n'''
+			elif [ "${i:0:8}" = "USER_UID" ]; then
+				file+='''\t\t--build-arg USER_UID=$(shell id --user) \x5C\n'''
+			elif [ "${i:0:8}" = "USER_NAM" ]; then
+				file+='''\t\t--build-arg USER_NAME=$(shell id --user --name) \x5C\n'''
+			fi
+		elif [ "${i:0:3}" != "TAG" ]; then
+			IFS=","
+			set -- $i
+			file+=$(printf '''\t\t--build-arg %s=$(%s) ''' "$1" "$1")"\x5C\n"
+			unset IFS
+		fi
+	done
+	file+='\t\t--tag $(IMAGE_NAME):'
+	file+="${tag}"
+	file+=' \x5C\n\t\t.\n'
 }
 
 compile_file() {
-  filetype=$1
-  if [[ "${file}" != "" ]]; then
-    file+=$'\n'
-  fi
-  eval "components=\"\${${filetype}_components[*]}\""
-  for component in ${components}; do
-    if [[ "${component}" =~ "/" ]]; then
-      component_path="${path_repositories}/${component}"
-    else
-      component_path="${path_templates}/components/${filetype}/${component}"
-    fi
-    if [[ -s "${component_path}" ]]; then
-      file+="$(cat "${component_path}" | sed '${/^$/d;}')"
-      file+=$'\n'
-    fi
-    if [[ ${component} == "buildstage-development" ]]; then
-      compile_build_args 'development'
-    elif [[ ${component} == "buildstage-production" ]]; then
-      compile_build_args '$(TAG)'
-    fi
-  done
+	filetype=$1
+	if [[ "${file}" != "" ]]; then
+		file+=$'\n'
+	fi
+	eval "components=\"\${${filetype}_components[*]}\""
+	# shellcheck disable=SC2154
+	for component in ${components}; do
+		if [[ "${component}" =~ "/" ]]; then
+			component_path="${path_repositories}/${component}"
+		else
+			component_path="${path_templates}/components/${filetype}/${component}"
+		fi
+		if [[ -s "${component_path}" ]]; then
+			file+="$(cat "${component_path}" | sed '${/^$/d;}')"
+			file+=$'\n'
+		fi
+		if [[ ${component} == "buildstage-development" ]]; then
+			compile_build_args 'development'
+		elif [[ ${component} == "buildstage-production" ]]; then
+			compile_build_args '$(TAG)'
+		fi
+	done
 }
 
 compile_header() {
-  sorted=($(printf '%s\n' "$@" | sort))
-  file=""
-  reserved_params=(
-    "TAG"
-    "USER_GID"
-    "USER_NAME"
-    "USER_UID"
-  )
-  for i in ${sorted[*]}; do
-    IFS=","
-    set -- $i
-    if [[ ! " ${reserved_params[@]} " =~ " $1 " ]]; then
-      file+=$(printf '%-15s := %s\\n' "$1" "$2")
-    fi
-    unset IFS
-  done
-  file+=$'\n'
-  file+='# These settings only apply to the production image\n'
-  for i in ${sorted[*]}; do
-    IFS=","
-    set -- $i
-    if [[ " ${reserved_params[@]} " =~ " $1 " ]]; then
-      file+=$(printf '%-15s := %s\\n' "$1" "$2")
-    fi
-    unset IFS
-  done
-  file=${file%\\n}
+	# shellcheck disable=SC2207
+	sorted=($(printf '%s\n' "$@" | sort))
+	file=""
+	reserved_params=(
+		"TAG"
+		"USER_GID"
+		"USER_NAME"
+		"USER_UID"
+	)
+	for i in "${sorted[@]}"; do
+		IFS=","
+		set -- $i
+		if [[ ! " ${reserved_params[*]} " =~ $1 ]]; then
+			file+=$(printf '%-15s := %s\\n' "$1" "$2")
+		fi
+		unset IFS
+	done
+	file+=$'\n'
+	file+='# These settings only apply to the production image\n'
+	for i in "${sorted[@]}"; do
+		IFS=","
+		set -- $i
+		if [[ " ${reserved_params[*]} " =~ $1 ]]; then
+			file+=$(printf '%-15s := %s\\n' "$1" "$2")
+		fi
+		unset IFS
+	done
+	file=${file%\\n}
 }
 
 if [[ ${regenerate_repository} == 0 ]]; then
-  mkdir "${repo_name}"
-  if [ "${enable_git}" == '1' ]; then
-    printf "$(cd "${repo_name}" && git init --initial-branch=main >/dev/null)"
-  fi
-  cd ${repo_name}
+	mkdir "${repo_name}"
+	if [ "${enable_git}" == '1' ]; then
+		printf "$(cd "${repo_name}" && git init --initial-branch=main >/dev/null)"
+	fi
+	cd "${repo_name}" || exit
 fi
 
 if [ -z ${workspace_name+x} ]; then
-  workspace_name=${default_workspace_name}
+	workspace_name=${default_workspace_name}
 fi
 
 required_directories=(
-  ${workspace_name}
-  build
-  build/resources
+	"${workspace_name}"
+	build
+	build/resources
 )
 
 required_files=(
-  build/packagelist
+	build/packagelist
 )
 
-for required_directory in ${required_directories[*]}; do
-  if [ ! -d ${required_directory} ]; then
-    mkdir ${required_directory}
-  fi
+for required_directory in "${required_directories[@]}"; do
+	if [ ! -d ${required_directory} ]; then
+		mkdir ${required_directory}
+	fi
 done
 
-for required_file in ${required_files[*]}; do
-  if [ ! -f ${required_file} ]; then
-    touch ${required_file}
-  fi
+for required_file in "${required_files[@]}"; do
+	if [ ! -f ${required_file} ]; then
+		touch ${required_file}
+	fi
 done
 
 file=""
@@ -246,9 +250,9 @@ compile_file "dockerfile"
 echo "${file}" | head -c -1 >Dockerfile
 
 dockerfile_args+=(
-  "TAG,latest"
+	"TAG,latest"
 )
-compile_header ${dockerfile_args[*]}
+compile_header "${dockerfile_args[@]}"
 compile_file "makefile"
 printf "${file}" | head -c -1 >Makefile
 
@@ -259,39 +263,42 @@ echo "${file}" | head -c -1 >README.md
 
 # Generate .dockerignore
 cat ${path_templates}/components/dockerignore >.dockerignore
-for component in ${dockerignore_entries[*]}; do
-  echo "${component}" >>.dockerignore
+# shellcheck disable=SC2154
+for component in "${dockerignore_entries[@]}"; do
+	echo "${component}" >>.dockerignore
 done
 
 # Create any directories and files as listed in the template
-for directory in ${create_directories[*]}; do
-  mkdir -p "${directory}"
+# shellcheck disable=SC2154
+for directory in "${create_directories[@]}"; do
+	mkdir -p "${directory}"
 done
 
 if [[ ${regenerate_repository} == 0 ]]; then
-  echo "Created ${repository}-based docker-bbq repository: '${repo_name}'"
+	echo "Created ${repository}-based docker-bbq repository: '${repo_name}'"
 else
-  echo "Folder has been populated with ${repository}-based docker-bbq template"
+	echo "Folder has been populated with ${repository}-based docker-bbq template"
 fi
 
 if [ "${enable_git}" == '1' ]; then
-  # Generate .gitignore
-  cat ${path_templates}/components/gitignore >.gitignore
-  for component in ${gitignore_entries[*]}; do
-    echo "${component}" >>.gitignore
-  done
+	# Generate .gitignore
+	cat ${path_templates}/components/gitignore >.gitignore
+	# shellcheck disable=SC2154
+	for component in "${gitignore_entries[@]}"; do
+		echo "${component}" >>.gitignore
+	done
 
-  # Is this a repository?
-  if [ -d .git ]; then
-    # Were there any changes made?
-    if [ "$(git status --short)" != "" ]; then
-      if [[ ${regenerate_repository} == 1 ]]; then
-        echo "Changes were made to the repository - please check and commit"
-      else
-        git add . && git commit --quiet --message "Add docker-bbq ${repository} template"
-      fi
-    else
-      echo "Git showed no changes were made to current repository"
-    fi
-  fi
+	# Is this a repository?
+	if [ -d .git ]; then
+		# Were there any changes made?
+		if [ "$(git status --short)" != "" ]; then
+			if [[ ${regenerate_repository} == 1 ]]; then
+				echo "Changes were made to the repository - please check and commit"
+			else
+				git add . && git commit --quiet --message "Add docker-bbq ${repository} template"
+			fi
+		else
+			echo "Git showed no changes were made to current repository"
+		fi
+	fi
 fi

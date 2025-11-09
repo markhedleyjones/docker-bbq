@@ -2,6 +2,6 @@
 USER root
 RUN echo "if [[ -f ${WORKSPACE}/install/setup.bash ]]; then\n\
   source  ${WORKSPACE}/install/setup.bash\n\
-  fi" | tee --append ${WORKDIR}/.bashrc /ros_entrypoint.sh && sed -i '/exec "$@"/d' \
+  fi" | tee --append "${WORKDIR}/.bashrc" /ros_entrypoint.sh && sed -i '/exec "$@"/d' \
   /ros_entrypoint.sh && echo 'exec "$@"' >> /ros_entrypoint.sh
 USER ${USER_NAME}

@@ -10,6 +10,6 @@ RUN if [ "${APT_MIRROR}" != "" ]; then if [ "${APT_MIRROR}" = "auto" ]; then \
 COPY build/tmp/packagelist /build/packagelist
 RUN if [ -s /build/packagelist ] ; then \
   apt-get update \
-  && apt-get install --yes --no-install-recommends $(cat /build/packagelist | xargs) \
+  && apt-get install --yes --no-install-recommends $(xargs < /build/packagelist) \
   && rm -rf /var/lib/apt/lists/* ; \
   fi

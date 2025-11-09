@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # Variables used by bbq-create via eval
+
 dockerfile_args=(
   BASE_IMAGE,alpine:latest
   USER_GID,1000

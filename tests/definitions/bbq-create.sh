@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # name is read by run_test() in test.sh
+
 name='Valid template exits success'
 pass 'bbq-create debian ${TESTREPO}'
 

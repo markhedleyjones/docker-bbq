@@ -1,0 +1,21 @@
+# ShellCheck configuration for docker-bbq
+
+# SC1090: Can't follow non-constant source
+# Template files are sourced dynamically by bbq-create
+disable=SC1090
+
+# SC2034: Variable appears unused
+# Many variables in template files are used by bbq-create via eval
+# Also applies to variables set for external use
+# Individual files should add comments explaining legitimate unused variables
+# disable=SC2034
+
+# SC2054: Use spaces, not commas, to separate array elements
+# In template files, commas are intentional as array elements are key-value pairs
+disable=SC2054
+
+# SC2154: Variable is referenced but not assigned
+# Variables like dockerfile_args, workspace_name etc are set in template files
+# and sourced by bbq-create before use
+# Individual files should disable this where templates define variables
+# disable=SC2154

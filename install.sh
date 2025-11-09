@@ -11,7 +11,7 @@ paths_to_try=(
 
 find_install_path() {
 	install_path=NULL
-	for path in ${paths_to_try[*]}; do
+	for path in "${paths_to_try[@]}"; do
 		if [[ ${install_path} == NULL ]] && [[ -d ${path} ]]; then
 			echo "Detected installation path at: ${path}"
 			install_path="${path}"
@@ -30,7 +30,7 @@ do_install() {
 	echo
 	echo "Installing docker-bbq (copying files)..."
 
-	for script in ${scripts[*]}; do
+	for script in "${scripts[@]}"; do
 		target="${install_path}/${script}"
 		source="${script_dir}/bin/${script}"
 
@@ -50,7 +50,7 @@ do_link() {
 	echo
 	echo "Installing docker-bbq (symbolic links)..."
 
-	for script in ${scripts[*]}; do
+	for script in "${scripts[@]}"; do
 		target="${install_path}/${script}"
 		source="${script_dir}/bin/${script}"
 
@@ -70,7 +70,7 @@ do_uninstall() {
 	echo "Uninstalling docker-bbq..."
 
 	removed_count=0
-	for script in ${scripts[*]}; do
+	for script in "${scripts[@]}"; do
 		if [[ -f ${install_path}/${script} ]] || [[ -L ${install_path}/${script} ]]; then
 			rm -f "${install_path}/${script}"
 			echo "Removed '${script}'"
@@ -110,16 +110,16 @@ Usage: $(basename "$0") [OPTION]
 Install docker-bbq commands to your local bin directory.
 
 Options:
-  --install    Copy docker-bbq scripts to local bin (default)
-  --link       Create symbolic links to docker-bbq scripts
-  --uninstall  Remove docker-bbq scripts from local bin
-  --help, -h   Show this help message
+	--install    Copy docker-bbq scripts to local bin (default)
+	--link       Create symbolic links to docker-bbq scripts
+	--uninstall  Remove docker-bbq scripts from local bin
+	--help, -h   Show this help message
 
 Examples:
-  $(basename "$0")              # Install by copying (default)
-  $(basename "$0") --install    # Install by copying
-  $(basename "$0") --link       # Install using symbolic links
-  $(basename "$0") --uninstall  # Remove docker-bbq
+	$(basename "$0")              # Install by copying (default)
+	$(basename "$0") --install    # Install by copying
+	$(basename "$0") --link       # Install using symbolic links
+	$(basename "$0") --uninstall  # Remove docker-bbq
 
 When no option is specified, '--install' is used by default.
 EOF

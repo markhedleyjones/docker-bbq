@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034  # name is read by run_test() in test.sh
+
 name="PIP package installation"
 printf "meowsay\ndinosay" >build/pip3-requirements.txt
 pass make

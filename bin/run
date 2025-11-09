@@ -76,11 +76,13 @@ find_repo_name() {
 }
 
 get_docker_images() {
+	# shellcheck disable=SC2207
 	docker_images_full=($(${CONTAINER_RUNTIME} image list --format "{{.Repository}}:{{.Tag}}" --filter=dangling=false | grep -v "<none>$"))
 }
 
 list_docker_images() {
 	get_docker_images
+	# shellcheck disable=SC2034
 	for image in "${docker_images_full[@]}"; do
 		echo "$(basename ${image_name})"
 	done
@@ -130,45 +132,45 @@ usage() {
 	cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [--repo <path_to_repo>] [command]
 
-  Enter a docker container and optionally execute a command. If no command is
-  given, drop into an interactive shell.
+	Enter a docker container and optionally execute a command. If no command is
+	given, drop into an interactive shell.
 
-  The image-source will be determined the following checks:
-  1. If <path_to_repo> is provided, search that path for docker-bbq repository.
-  2. Check to see if the user is currently in a docker-bbq repository.
+	The image-source will be determined the following checks:
+	1. If <path_to_repo> is provided, search that path for docker-bbq repository.
+	2. Check to see if the user is currently in a docker-bbq repository.
 
-  Once the image-source is decided, check if a container is already running.
-  - If so, execute the command (or drop into a shell) inside that image.
-  - If not, start a new image using docker run.
+	Once the image-source is decided, check if a container is already running.
+	- If so, execute the command (or drop into a shell) inside that image.
+	- If not, start a new image using docker run.
 
 OPTIONS:
 
-  --mount       <path>
-                  An alias for --mount-input
-  --mount-input <path>
-                  Provide a path to a folder to mount into the container
-                  will appear at /mnt/input with read-only permissions
+	--mount       <path>
+									An alias for --mount-input
+	--mount-input <path>
+									Provide a path to a folder to mount into the container
+									will appear at /mnt/input with read-only permissions
 
-  --mount-output <path>
-                  Provide a path to a folder to mount out of the container
-                  will appear at /mnt/output with read and write permissions
+	--mount-output <path>
+									Provide a path to a folder to mount out of the container
+									will appear at /mnt/output with read and write permissions
 
-  --aws           Link AWS credentials into the container
-  -h, --help      Print this help and exit
-  -i, --image     Provide a docker image name
-  -l, --list      Print the list of docker images and exit
-  -n, --non-interactive
-                  Run in non-interactive mode (no tty)
-  -r, --repo      Provide a path to a docker-bbq repository
-  -t, --tag       Provide a docker image tag
-  -v, --verbose   Print verbose output
+	--aws           Link AWS credentials into the container
+	-h, --help      Print this help and exit
+	-i, --image     Provide a docker image name
+	-l, --list      Print the list of docker images and exit
+	-n, --non-interactive
+									Run in non-interactive mode (no tty)
+	-r, --repo      Provide a path to a docker-bbq repository
+	-t, --tag       Provide a docker image tag
+	-v, --verbose   Print verbose output
 
 
 EXAMPLES:
 
-  $(basename "${BASH_SOURCE[0]}") ~/repos/debian-buster-slim
+	$(basename "${BASH_SOURCE[0]}") ~/repos/debian-buster-slim
 
-  Drop into the shell of a docker-bbq repository at specified path.
+	Drop into the shell of a docker-bbq repository at specified path.
 EOF
 	exit
 }
@@ -222,6 +224,7 @@ fi
 testing "image-from-working-dir" "${image_name}"
 
 container_workdir=""
+# shellcheck disable=SC2034
 user_command=""
 
 # Dont mount input/output if we are not in a repository using development image
@@ -286,7 +289,7 @@ if [[ ! -f "${bash_history_path}" ]]; then
 fi
 
 # Detect which shell is installed in the image
-shell=$(${CONTAINER_RUNTIME} run --entrypoint "" --rm ${image_name}:${image_tag} sh -c 'command -v bash || command -v sh')
+shell=$(${CONTAINER_RUNTIME} run --entrypoint "" --rm --pull=never ${image_name}:${image_tag} sh -c 'command -v bash || command -v sh' 2>/dev/null) || shell="/bin/sh"
 
 if [[ ${#user_command_args[@]} -gt 0 ]]; then
 	# Join all user command arguments into a single properly quoted string for bash -c
@@ -314,8 +317,14 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		"${CONTAINER_RUNTIME}" "run"
 		"--name" "${container_name}"
 		"--rm"
+		"--pull=never"
 		"--net" "host"
 	)
+
+	# For Podman rootless, preserve UID mapping for volume mounts
+	if [[ "${CONTAINER_RUNTIME}" == "podman" ]]; then
+		docker_run_args+=("--userns=keep-id")
+	fi
 
 	# Add optional args
 	if [[ ${run_with_privileges} -eq 1 ]]; then
@@ -352,18 +361,24 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 			# Use different GPU access method for Docker vs Podman
 			if [[ "${CONTAINER_RUNTIME}" == "docker" ]]; then
 				docker_run_args+=("--gpus=all")
-			else
-				# For Podman, pass through NVIDIA device files
-				docker_run_args+=("--device" "/dev/nvidia0:/dev/nvidia0")
-				docker_run_args+=("--device" "/dev/nvidiactl:/dev/nvidiactl")
-				docker_run_args+=("--device" "/dev/nvidia-uvm:/dev/nvidia-uvm")
+			elif [[ "${CONTAINER_RUNTIME}" == "podman" ]]; then
+				# For Podman with NVIDIA CDI support
+				docker_run_args+=("--device" "nvidia.com/gpu=all")
+				docker_run_args+=("--annotation=run.oci.keep_original_groups=1")
+				docker_run_args+=("--security-opt=label=disable")
 			fi
 		fi
 	fi
 
-	# Workspace mount
+	# Audio support (PulseAudio/PipeWire)
+	if [[ -S "/run/user/$(id -u)/pulse/native" ]]; then
+		docker_run_args+=("-v" "/run/user/$(id -u)/pulse/native:/run/user/$(id -u)/pulse/native")
+		docker_run_args+=("-e" "PULSE_SERVER=unix:/run/user/$(id -u)/pulse/native")
+	fi
+
+	# Workspace mount (with :z for SELinux - harmless on non-SELinux systems)
 	if [[ "${local_workspace}" != "" ]] && [[ "${image_workspace}" != "" ]]; then
-		docker_run_args+=("-v" "${local_workspace}:${image_workspace}")
+		docker_run_args+=("-v" "${local_workspace}:${image_workspace}:z")
 	fi
 
 	# AWS credentials
@@ -372,12 +387,12 @@ if [[ ! $(${CONTAINER_RUNTIME} ps --quiet --filter name="${container_name}") ]];
 		docker_run_args+=("-v" "${HOME}/.aws:${container_workdir}/.aws")
 	fi
 
-	# IO mounts
+	# IO mounts (with z for SELinux - harmless on non-SELinux systems)
 	if [[ "${path_mount_input}" != "NULL" ]]; then
-		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_input}"),target=/mnt/input,readonly" "--env" "INPUT_MOUNTPOINT=/mnt/input")
+		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_input}"),target=/mnt/input,readonly,z" "--env" "INPUT_MOUNTPOINT=/mnt/input")
 	fi
 	if [[ "${path_mount_output}" != "NULL" ]]; then
-		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_output}"),target=/mnt/output" "--env" "OUTPUT_MOUNTPOINT=/mnt/output")
+		docker_run_args+=("--mount" "type=bind,source=$(absolute_path "${path_mount_output}"),target=/mnt/output,z" "--env" "OUTPUT_MOUNTPOINT=/mnt/output")
 	fi
 
 	# User args
