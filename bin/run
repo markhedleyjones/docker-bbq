@@ -289,7 +289,7 @@ if [[ ! -f "${bash_history_path}" ]]; then
 fi
 
 # Detect which shell is installed in the image
-shell=$(${CONTAINER_RUNTIME} run --entrypoint "" --rm ${image_name}:${image_tag} sh -c 'command -v bash || command -v sh')
+shell=$(${CONTAINER_RUNTIME} run --entrypoint "" --rm --pull=never ${image_name}:${image_tag} sh -c 'command -v bash || command -v sh')
 
 if [[ ${#user_command_args[@]} -gt 0 ]]; then
 	# Join all user command arguments into a single properly quoted string for bash -c
